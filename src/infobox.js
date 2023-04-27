@@ -125,6 +125,24 @@ function InfoBox(opt_opts) {
  */
 InfoBox.prototype = new google.maps.OverlayView();
 
+InfoBox.prototype.addEventListener = function ( target, type, handler, useCapture ) {
+
+  useCapture = useCapture || false;
+
+  target.addEventListener( type, handler, useCapture );
+
+  return {
+    target: target,
+    type: type,
+    handler: handler,
+    useCapture: useCapture,
+  }
+}
+
+InfoBox.prototype.removeEventListener = function ( listener ) {
+  listener.target.removeEventListener( listener.type, listener.handler, listener.useCapture );
+}
+
 /**
  * Creates the DIV representing the InfoBox.
  * @private
@@ -216,17 +234,17 @@ InfoBox.prototype.createInfoBoxDiv_ = function () {
 
       for (i = 0; i < events.length; i++) {
 
-        this.eventListeners_.push(google.maps.event.addDomListener(this.div_, events[i], cancelHandler));
+        this.eventListeners_.push(this.addEventListener(this.div_, events[i], cancelHandler));
       }
 
       // Workaround for Google bug that causes the cursor to change to a pointer
       // when the mouse moves over a marker underneath InfoBox.
-      this.eventListeners_.push(google.maps.event.addDomListener(this.div_, "mouseover", function (e) {
+      this.eventListeners_.push(this.addEventListener(this.div_, "mouseover", function (e) {
         this.style.cursor = "default";
       }));
     }
 
-    this.contextListener_ = google.maps.event.addDomListener(this.div_, "contextmenu", ignoreHandler);
+    this.contextListener_ = this.addEventListener(this.div_, "contextmenu", ignoreHandler);
 
     /**
      * This event is fired when the DIV containing the InfoBox's content is attached to the DOM.
@@ -271,7 +289,7 @@ InfoBox.prototype.addClickHandler_ = function () {
   if (this.closeBoxURL_ !== "") {
 
     closeBox = this.div_.firstChild;
-    this.closeListener_ = google.maps.event.addDomListener(closeBox, "click", this.getCloseClickHandler_());
+    this.closeListener_ = this.addEventListener(closeBox, "click", this.getCloseClickHandler_());
 
   } else {
 
@@ -590,7 +608,7 @@ InfoBox.prototype.setContent = function (content) {
 
     if (this.closeListener_) {
 
-      google.maps.event.removeListener(this.closeListener_);
+      this.removeEventListener(this.closeListener_);
       this.closeListener_ = null;
     }
 
@@ -788,7 +806,7 @@ InfoBox.prototype.close = function () {
 
   if (this.closeListener_) {
 
-    google.maps.event.removeListener(this.closeListener_);
+    this.removeEventListener(this.closeListener_);
     this.closeListener_ = null;
   }
 
@@ -796,7 +814,7 @@ InfoBox.prototype.close = function () {
 
     for (i = 0; i < this.eventListeners_.length; i++) {
 
-      google.maps.event.removeListener(this.eventListeners_[i]);
+      this.removeEventListener(this.eventListeners_[i]);
     }
     this.eventListeners_ = null;
   }
@@ -809,7 +827,7 @@ InfoBox.prototype.close = function () {
 
   if (this.contextListener_) {
 
-    google.maps.event.removeListener(this.contextListener_);
+    this.removeEventListener(this.contextListener_);
     this.contextListener_ = null;
   }
 
